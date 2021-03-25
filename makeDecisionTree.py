@@ -6,6 +6,7 @@ from pprint import pprint
 from random import choice
 
 encodings_dict = {}
+target = ""
 
 def entropy(count1, count2):
     if count1 == count2:
@@ -17,17 +18,17 @@ def entropy(count1, count2):
     return (-(prob1*np.log2(prob1)) - (prob2*np.log2(prob2)))
 
 def importance(attr, examples):
-    entropy_before = entropy(examples["play"].tolist().count(0), examples["play"].tolist().count(1))
+    entropy_before = entropy(examples[target].tolist().count(0), examples[target].tolist().count(1))
 
     entropy_after = {}
 
     for val in attr:
         attr_vals = list(np.unique(examples[val].tolist()))
-        total_count = len(examples["play"].tolist())
+        total_count = len(examples[target].tolist())
         entropy_list = []
         for attr_val in attr_vals:
             exs = examples[examples[val] == attr_val]
-            ent = (len(exs["play"].tolist())/total_count)*entropy(exs["play"].tolist().count(0), exs["play"].tolist().count(1))
+            ent = (len(exs[target].tolist())/total_count)*entropy(exs[target].tolist().count(0), exs[target].tolist().count(1))
             entropy_list.append(ent)
         entropy_after[val] = sum(entropy_list)
     
@@ -39,8 +40,8 @@ def importance(attr, examples):
 
 def decisionTreeLearning(examples = None, attr = None, parent_examples = None):
     
-    if len(np.unique(examples["play"].tolist())) == 1:
-        if examples["play"].iloc[0] == 0:
+    if len(np.unique(examples[target].tolist())) == 1:
+        if examples[target].iloc[0] == 0:
             return "No"
         else:
             return "Yes"
@@ -61,7 +62,7 @@ def decisionTreeLearning(examples = None, attr = None, parent_examples = None):
     
     return {max_attr: tree}
 
-def initiator(encodings = None, dataset = None):
+def initiator(dataset = None, encodings = None):
     lines = []
     with open(f'./{encodings}', 'r') as f:
         lines = f.readlines()
@@ -69,13 +70,14 @@ def initiator(encodings = None, dataset = None):
         for i in range(len(lines[0])):
             encodings_dict[lines[0][i]] = lines[i+1]
     examples = pd.read_csv(f'./{dataset}', delimiter = ",", header = None, names = list(encodings_dict.keys()), dtype = np.int64)
-
+    global target 
+    target = list(encodings_dict.keys())[-1]
     pprint(decisionTreeLearning(examples = examples, attr = list(encodings_dict.keys())[:-1], parent_examples = examples))
    
 if __name__ == "__main__":
     try:
         if (len(sys.argv) != 3):
-            print(f'\nIncorrect number of inputs\ntry this: makeDecisionTree.py encodings.txt dataset.txt\n\nShutting Down...')
+            print(f'\nIncorrect number of inputs\ntry this: makeDecisionTree.py dataset.txt encodings.txt\n\nShutting Down...')
             sys.exit(0)
 
         elif not path.exists(sys.argv[1]):
